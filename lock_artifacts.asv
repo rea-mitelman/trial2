@@ -1,0 +1,18 @@
+function [all_artifacts_lock, shift]=lock_artifacts(all_artifacts)
+% function all_artifacts_lock=lock_artifacts(all_artifacts)
+% 
+% Locks and cuts all artifacts (row vectors in the input matrix) to the
+% (first) maximum. It also returns the shift in indices it entered, e.g.,
+% if the locked artifacts is in indices [1:j] of the original artifact, the
+% shift is 0; in the other extreme, if the locked artifact is in indices
+% [k:end], the shift is k-1
+
+[~,max_ixs]=max(all_artifacts,[],2);
+jitter_span=max(max_ixs)-min(max_ixs);
+shorten_length=size(all_artifacts,2)-jitter_span;
+all_1st_ixs=max_ixs-min(max_ixs)+1;
+
+%might be possible to vectorize:
+all_artifacts_lock=zeros(size(all_artifacts,1),shorten_length);
+for ii=1:length(all_1st_ixs)
+	all_artifacts_lock(ii,:)=all_

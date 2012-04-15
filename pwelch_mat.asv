@@ -1,0 +1,6 @@
+function [Pxx,f] = pwelch_mat(varargin)
+X=varargin{1};
+
+for ii=1:size(X,2)
+	
+

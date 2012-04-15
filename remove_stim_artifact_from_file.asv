@@ -1,0 +1,43 @@
+function clean_signal=remove_stim_artifact_from_file(file_base_name,elect_num,artifact_duration)
+% removes artifact from data, given in a file. calls remove_stim_artifact.
+% inputs:
+% file_base_name: the base of the file names, including the path. The base
+% excludes the _bhv and _wvf in the end of the file name. e.g. for the
+% file:D:\Rea's_Documents\Prut\Ctx-Thal\data\h040210\MAT\h040210041_bhv.mat
+% , the file_base_name looks like this:
+% D:\Rea''s_Documents\Prut\Ctx-Thal\data\h040210\MAT\h040210041
+% elect_num: the electode number
+% artifact_duration: the duration of the stimulus artifact, in miliseconds
+% (see remove_stim_artifact for details)
+% output:
+% clean_signal: the signal after stimulus artifact removal, sampled in the
+% sampling rate of the original signal.
+
+bhv_file=[file_base_name '_bhv.mat'];
+wvf_file=[file_base_name '_wvf.mat'];
+bhv_vars=who('-file',bhv_file);
+wvf_vars=who('-file',wvf_file);
+
+elect_var_name=['Unit' num2str(elect_num)];
+if strcmp(wvf_vars,elect_var_name)
+	raw_signal = load(wvf_file,elect_var_name,[elect_var_name '_KHz']);
+elseif strcmp(bhv_vars,elect_var_name)
+	raw_signal = load(bhv_file,elect_var_name,[elect_var_name '_KHz']);
+	disp('Unit data was found in bhv file')
+else
+	error('data not found')
+end
+
+
+if strcmp(bhv_vars,'AMstim_on')
+	stim_times=load(bhv_file,'AMstim_on','AMstim_on_KHz');
+elseif strcmp(wvf_vars,'AMstim_on')
+	stim_times=load(wvf_file,'AMstim_on','AMstim_on_KHz');
+	disp('stim data was found in wvf file')
+else
+	disp('no stimulations in file, returning original data')
+	clean_signal=raw_signal.(elect_var_name);
+end
+
+clean_signal=remove_stim_artifact(...
+	raw_signal.(elect_var_name),raw_signal.([elect_var_name '_KHz']),stim_times.(AM,stim_times_Fs,artifact_duration);

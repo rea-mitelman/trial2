@@ -1,0 +1,140 @@
+function clean_signal=remove_scaled_stim_artifact...
+	(raw_signal, raw_signal_Fs, stim_times, scale_vec, org_art_dur, dead_time, nan_flag, do_lin_decay)
+%
+% clean_signal=remove_stim_artifact
+% (raw_signal, raw_signal_Fs, stim_time, stim_time_Fs, art_dur)
+% Cleans the raw signal from the stimulus artifact, by zeroing the dead
+% time (defined under the variable dead_time);averaging and
+% subtraction of the average artifact in a decay manner: from t=dead_time
+% till t=org_art_dur the value is fully subtracted; from t=org_art_dur till
+% t=art_dur, the subtraction value is decayed linearly to zero (i.e., at
+% t=org_art_dur there is a full subtraction of the average artifact,
+% whereas at t=art_dur there is no subtraction de-facto.
+% but it's suitable for spike sorting (where the problem is the threshold
+% setting).
+% Inputs:
+% raw_signal: an analog vector of the raw signal (unit), with the stimulus artifacts
+% raw_signal_Fs: sampling rate of the raw signal, in KHz .
+% stim_times: digital vector of the time samples of the stimuli, in seconds
+% stim_time_Fs: sampling rate of the stimuli times, in KHz
+% art_dur: the duration of the stimulus artifact, in milliseconds.
+% Output:
+% clean_signal: the clean signal, i.e. after removal of the artifacts,
+% sampled in the same sampling frequency as the original signal.
+
+%convert the time-stemps to indices
+do_test=false;
+if ~unempty_exist('do_lin_decay')
+    do_lin_decay=false;
+end
+
+if ~unempty_exist('nan_flag')
+    nan_flag=false;
+end
+if nan_flag
+    NaN_0=NaN;
+else
+    NaN_0=0;
+end
+    
+
+
+clean_signal=raw_signal;
+
+if isempty(stim_times)
+	disp('No stimuli were removed');
+	return
+end
+fprintf('Removing %1.0f stimuli from file\n', length(stim_times))
+stim_times=stim_times*1e3;%convert everything to msec & KHz
+if ~exist('org_art_dur','var') || isempty (org_art_dur)
+	org_art_dur=3;
+	fprintf('Using artifact duration of %1.0f (plus an identical time for decay)\n',org_art_dur);
+end
+art_dur=2*org_art_dur;%the 2nd half is used for the decay
+
+if ~unempty_exist('dead_time')
+    dead_time=1;
+end
+
+if art_dur < dead_time
+	error('Artifact duration (art_dur) is shorter than dead time')
+end
+
+stim_ixs=round(stim_times*raw_signal_Fs);
+stim_ixs=stim_ixs(:);
+n_stims=length(stim_ixs);
+art_dur_ixs=round((art_dur)*raw_signal_Fs);
+art_ixs=[1:art_dur_ixs]-1; %#ok<*NBRAK>
+all_art_ixs=repmat(stim_ixs,1,art_dur_ixs)+repmat(art_ixs,n_stims,1);
+
+org_n_samp=length(raw_signal);
+raw_signal(org_n_samp+art_ixs+1)=NaN;
+
+if all_art_ixs(end) > length(raw_signal)
+	error('last stimulus artifact outside boundaries, this needs to be solved')
+end
+
+all_artifacts=raw_signal(all_art_ixs);
+
+%run over all indices, and create a matrix of all artifacts to extract
+%mean, in vectorized matlab programing
+
+mean_artifact=nanmean(all_artifacts);
+%run over all indices, this time to subtract the mean
+% for i_art=1:n_stims
+% 	clean_signal(all_art_ixs(i_art,:))=clean_signal(all_art_ixs(i_art,:))-mean_artifact;
+% end
+n_samp=length(mean_artifact);
+decay_vec=ones(size(mean_artifact));
+if do_lin_decay
+	decay_vec(n_samp/2+1:end)=linspace(1,0,n_samp/2);
+end
+mean_artifact_decayed=mean_artifact.*decay_vec;
+% subtracted_artifacts=all_artifacts-repmat(mean_artifact_decayed,n_stims,1);
+scaled_artifacts=repmat(mean_artifact_decayed,n_stims,1).*repmat(scale_vec,1,n_samp);
+subtracted_artifacts=all_artifacts-scaled_artifacts;
+
+i_2cut=dead_time*raw_signal_Fs;
+subtracted_artifacts(:,1:i_2cut)=NaN_0;
+
+clean_signal(all_art_ixs)=subtracted_artifacts;
+clean_signal=clean_signal(1:org_n_samp);
+
+
+
+
+% %% test
+if do_test
+	close all
+	hold on
+	t=art_ixs/raw_signal_Fs;
+	subplot(3,1,1)
+	plot(t,subtracted_artifacts)
+	subplot(3,1,2)
+	hold on
+	plot(t,all_artifacts)
+	plot(t,mean_artifact,'k','LineWidth',2)
+	yl=ylim;
+	subplot(3,1,1)
+	ylim(yl)
+	check_dur_ixs=2*art_dur_ixs;
+	check_ixs=[1:check_dur_ixs]-1;
+	all_check_ixs=repmat(stim_ixs,1,check_dur_ixs)+repmat(check_ixs,n_stims,1);
+	all_checks=clean_signal(all_check_ixs);
+	t_checks=check_ixs/raw_signal_Fs;
+	subplot(3,1,3)
+	plot(t_checks,all_checks);
+	% 	plot(t,std_vec,'g','LineWidth',2)
+	% 	plot(t,ones(size(t))*5*std_no_art,'c','LineWidth',2)
+	%
+	% 	plot(t(local_max_std_i),std_vec(local_max_std_i),'+r')
+	% 	plot(t(local_max_std_dev_i),std_vec(local_max_std_dev_i),'*r')
+	% 	plot(t(last_peak_i),std_vec(last_peak_i),'or')
+	%
+	%
+	% 	plot(t(i_2cut),std_vec(i_2cut),'or')
+	% 	figure;
+	% 	plot(t,subtracted_artifacts)
+	pause
+end

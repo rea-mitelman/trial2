@@ -1,0 +1,53 @@
+function [stim_times stim_times_KHz] = get_stim_times
+% this function is run after loading the bhv data file (at least all *tim*
+% variables), and returns in its output the correct stimuli times vector.
+% If it doesn't exist, it returns an empty vector. This function
+% approaches variables in the caller function's enviroment, hence it has to
+% be called after loading the data.
+
+ex_AMstim=evalin('caller','exist(''AMstim'',''var'');');
+ex_AMstim_on = evalin('caller','exist(''AMstim_on'',''var'');');
+ex_StimTime = evalin('caller', 'exist(''StimTime'',''var'');');
+
+if ex_AMstim+ex_AMstim_on+ex_StimTime>1
+    error('More than one stimuli file exists')
+end
+
+if ex_AMstim
+    disp_str=('Stimulation variable: AMstim (older format, AM-systems stimulator)');
+    stim_times=evalin('caller','AMstim');
+    if nargout==2 && evalin('caller','exist(''AMstim_KHz'',''var'');')
+        stim_times_KHz=evalin('caller','AMstim_KHz');
+    else
+        stim_times_KHz=[];
+    end
+elseif ex_AMstim_on 
+    disp_str=('Stimulation variable: AMstim_on (newer format, AM-systems stimulator)');
+    stim_times=evalin('caller', 'AMstim_on');
+    if nargout==2 && evalin('caller','exist(''AMstim_on_KHz'',''var'');')
+        stim_times_KHz=evalin('caller','AMstim_on_KHz');
+    else
+        stim_times_KHz=[];
+    end
+
+elseif ex_StimTime 
+    disp_str=('Stimulation variable: StimTime (old format, Alpha-Omega stimulator)');
+    stim_times=evalin('caller', 'StimTime');
+    if nargout==2 && evalin('caller','exist(''StimTime_KHz'',''var'');')
+        stim_times_KHz=evalin('caller','StimTime_KHz');
+    else
+        stim_times_KHz=[];
+    end
+
+else
+    disp_str=('No stimulations variable was found, make sure this file does not contain stimuli');
+    stim_times=[];
+    stim_times_KHz=[];
+
+end
+
+first_time = ~evalin('caller','exist (''flag_1st_time'')');
+if first_time
+    disp(disp_str);
+    evalin('caller','flag_1st_time=false;');
+end
