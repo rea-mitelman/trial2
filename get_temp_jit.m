@@ -40,7 +40,7 @@ jit_vec=-max_jit_per_itt:max_jit_per_itt;
 [n_resp n_samp]=size(org_mat);
 shift_vec=max_jit_per_itt+[1:n_samp];
 max_itter=200;
-do_plot=true;
+do_plot=false;
 jit_ixs=zeros(n_resp,1);
 
 for ii=1:2*max_jit_per_itt+1
