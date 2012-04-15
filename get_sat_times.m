@@ -1,4 +1,4 @@
-function sat_times=get_sat_ixs(signal,stim_times, signal_Fs, resp_dur)
+function sat_times=get_sat_times(signal,stim_times, signal_Fs, resp_dur)
 %%
 maxV=5;a2d_res=14;
 minmax_val=maxV-2*maxV*2^-a2d_res;

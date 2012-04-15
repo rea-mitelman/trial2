@@ -39,8 +39,8 @@ n_itter=0;
 jit_vec=-max_jit_per_itt:max_jit_per_itt;
 [n_resp n_samp]=size(org_mat);
 shift_vec=max_jit_per_itt+[1:n_samp];
-max_itter=100;
-do_plot=false;
+max_itter=200;
+do_plot=true;
 jit_ixs=zeros(n_resp,1);
 
 for ii=1:2*max_jit_per_itt+1
@@ -52,10 +52,15 @@ corr_mat=org_mat;
 while do_corr && n_itter<max_itter
     
     if do_plot
-        clf, hold on
-        subplot(2,1,1),plot(corr_mat'), plot(nanmean(corr_mat),'k','LineWidth',5)
+        clf
+        subplot(2,1,1),hold on
+		plot(corr_mat'), plot(nanmean(corr_mat),'k','LineWidth',2)
+		title(sprintf('#%1.0f',n_itter))
         subplot(2,1,2), plot(std(corr_mat))
-        pause(0.1)
+		drawnow
+		%         pause(0.1)
+
+		
     end
     
 	n_itter=n_itter+1;

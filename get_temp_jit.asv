@@ -39,8 +39,8 @@ n_itter=0;
 jit_vec=-max_jit_per_itt:max_jit_per_itt;
 [n_resp n_samp]=size(org_mat);
 shift_vec=max_jit_per_itt+[1:n_samp];
-max_itter=100;
-do_plot=false;
+max_itter=200;
+do_plot=true;
 jit_ixs=zeros(n_resp,1);
 
 for ii=1:2*max_jit_per_itt+1
@@ -56,6 +56,7 @@ while do_corr && n_itter<max_itter
         subplot(2,1,1),plot(corr_mat'), plot(nanmean(corr_mat),'k','LineWidth',5)
         subplot(2,1,2), plot(std(corr_mat))
         pause(0.1)
+		title(sprintf('#%1.0f',n_itter)
     end
     
 	n_itter=n_itter+1;
@@ -82,7 +83,8 @@ while do_corr && n_itter<max_itter
         do_corr=false;
     end
 end
-fprintf('Temporal jitter is between %1.0f and %1.0f samples. Conve\n',
+fprintf('Temporal jitter is between %1.0f and %1.0f samples. Converged after %1.0f itterations.\n',...
+    min(jit_ixs), max(jit_ixs), n_itter);
 
 if do_plot
     figure

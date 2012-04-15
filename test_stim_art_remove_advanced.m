@@ -6,7 +6,7 @@ clear; close all;
 
 upsamp_factor=8;
 resp_dur=[0 10];
-max_itt_jit=1;
+max_itt_jit=upsamp_factor;
 max_dead_time_dur=0.75;
 do_lin_decay=false;
 
@@ -16,7 +16,7 @@ root_dir = get_data_root_dir;
 % date_str='y310112'; %files 31:33 here are stimulation in agarose
 date_str='y150212'; %"best typical" day
 load_dir=sprintf('%s%s\\MAT\\',root_dir,date_str);
-files=15:44;
+files=31:44;
 % files=32:33;%9:30;
 
 % upsamp_factor_vec=[8];
